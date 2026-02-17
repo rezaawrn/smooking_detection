@@ -255,6 +255,18 @@ Route::get('/utilities-subscribe', function () {
     return view('pages.utilities-subscribe', ['type_menu' => 'utilities']);
 });
 
+Route::get('/dashboard', function () {
+    return view('monitoring-kamera');
+})->middleware('auth');
+
+Route::get('/monitoring-pelanggaran', function () {
+    return view('pages.monitoring-pelanggaran', [
+        'type_menu' => 'pelanggaran'
+    ]);
+
+});
+
+
 // credits
 Route::get('/credits', function () {
     return view('pages.credits', ['type_menu' => '']);
