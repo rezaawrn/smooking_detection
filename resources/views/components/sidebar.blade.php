@@ -23,8 +23,8 @@
 
             <!-- KAMERA -->
             <li class="menu-header">Kamera</li>
-            <li class="nav-item {{ $type_menu === 'dashboard' ? 'active' : '' }}">
-                <a href="{{ url('dashboard') }}" class="nav-link">
+            <li class="nav-item {{ $type_menu === 'kamera' ? 'active' : '' }}">
+                <a href="{{ url('monitoring-kamera') }}" class="nav-link">
                     <i class="fas fa-video"></i>
                     <span>Monitoring Kamera</span>
                 </a>

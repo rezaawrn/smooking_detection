@@ -1,105 +1,113 @@
-@extends('layouts.auth')
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smoking Detection - Login</title>
 
-@section('title', 'Login')
+  <script src="https://cdn.tailwindcss.com"></script>
 
-@push('style')
-    <!-- CSS Libraries -->
-    <link rel="stylesheet"
-        href="{{ asset('library/bootstrap-social/bootstrap-social.css') }}">
-@endpush
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-@section('main')
-    <div class="card card-primary">
-        <div class="card-header">
-            <h4>Login</h4>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      /* background-image: linear-gradient(135deg, #1e3d58 0%, #43b0f1 50%, #1e3d58 100%);
+      background-attachment: fixed;
+      background-size: cover; */
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+
+  <!-- VIDEO BACKGROUND -->
+  <video
+    autoplay
+    muted
+    loop
+    playsinline
+    class="fixed inset-0 w-full h-full object-cover z-0">
+    <source src="/videos/vud.mp4" type="video/mp4">
+  </video>
+
+  <!-- OVERLAY -->
+  <div class="fixed inset-0 bg-black/50 z-10"></div>
+
+  <div class="relative z-20 bg-white/60 backdrop-blur-md rounded-2xl shadow-2xl flex flex-col md:flex-row w-full max-w-md overflow-hidden">
+
+    <!-- Kolom kanan (form) -->
+    <div class="w-full p-10 flex flex-col justify-center">
+      
+      <!-- Logo kecil, hanya muncul di mobile -->
+      <div class="flex justify-center mb-4 md:hidden">
+        <img src="/images/logorri.png" alt="Logo RRI" class="w-24 h-auto">
+      </div>
+
+      <h2 class="text-2xl font-extrabold text-gray-800 text-center">Selamat Datang</h2>
+      <p class="text-center mb-6 text-sm">Silahkan Masukan Akun Anda</p>
+      <div class="border-b border-gray-600/40 w-60 mx-auto mb-8"></div>
+
+      {{-- FORM LOGIN --}}
+      <form action="" method="POST" class="space-y-6">
+        @csrf
+        <!-- Username -->
+        <div class="space-y-2">
+          <label class="font-medium text-gray-700">Nama Pengguna</label>
+          <div class="relative">
+            <input type="text" name="username" placeholder="Masukkan Nama Pengguna"
+              value="{{ old('username') }}"
+              class="w-full pl-4 pr-4 py-3 border rounded-full text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition" required>
+          </div>
         </div>
 
-        <div class="card-body">
-            <form method="POST"
-                action="#"
-                class="needs-validation"
-                novalidate="">
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input id="email"
-                        type="email"
-                        class="form-control"
-                        name="email"
-                        tabindex="1"
-                        required
-                        autofocus>
-                    <div class="invalid-feedback">
-                        Please fill in your email
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <div class="d-block">
-                        <label for="password"
-                            class="control-label">Password</label>
-                        <div class="float-right">
-                            <a href="auth-forgot-password.html"
-                                class="text-small">
-                                Forgot Password?
-                            </a>
-                        </div>
-                    </div>
-                    <input id="password"
-                        type="password"
-                        class="form-control"
-                        name="password"
-                        tabindex="2"
-                        required>
-                    <div class="invalid-feedback">
-                        please fill in your password
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <div class="custom-control custom-checkbox">
-                        <input type="checkbox"
-                            name="remember"
-                            class="custom-control-input"
-                            tabindex="3"
-                            id="remember-me">
-                        <label class="custom-control-label"
-                            for="remember-me">Remember Me</label>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <button type="submit"
-                        class="btn btn-primary btn-lg btn-block"
-                        tabindex="4">
-                        Login
-                    </button>
-                </div>
-            </form>
-            <div class="mt-4 mb-3 text-center">
-                <div class="text-job text-muted">Login With Social</div>
-            </div>
-            <div class="row sm-gutters">
-                <div class="col-6">
-                    <a class="btn btn-block btn-social btn-facebook">
-                        <span class="fab fa-facebook"></span> Facebook
-                    </a>
-                </div>
-                <div class="col-6">
-                    <a class="btn btn-block btn-social btn-twitter">
-                        <span class="fab fa-twitter"></span> Twitter
-                    </a>
-                </div>
-            </div>
-
+        <!-- Password -->
+        <div class="space-y-2">
+          <label class="font-medium text-gray-700">Kata Sandi</label>
+          <div class="relative">
+            <input type="password" name="password" placeholder="Masukkan kata sandi"
+              class="w-full pl-4 pr-4 py-3 border rounded-full text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition" required>
+          </div>
         </div>
-    </div>
-    <div class="text-muted mt-5 text-center">
-        Don't have an account? <a href="auth-register.html">Create One</a>
-    </div>
-@endsection
 
-@push('scripts')
-    <!-- JS Libraies -->
+        <!-- Tombol Login -->
+        <button type="submit"
+          class="w-full py-3 bg-[#4682B4] hover:bg-[#1e3d58] text-white font-semibold rounded-full transition duration-300">
+          Masuk
+        </button>
+      </form>
+    </div>
+  </div>
 
-    <!-- Page Specific JS File -->
-@endpush
+  <!-- SweetAlert -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  @if($errors->has('login_error'))
+  <script>
+  Swal.fire({
+    icon: 'error',
+    title: 'Login Gagal',
+    text: '{{ $errors->first("login_error") }}',
+    position: 'top',
+    toast: true,
+    showConfirmButton: false,
+    timer: 2200,
+    timerProgressBar: true,
+    backdrop: false,
+    customClass: {
+      popup: 'animate__animated animate__fadeInDown custom-toast'
+    },
+    didOpen: (toast) => {
+      toast.style.width = '420px';
+      toast.style.minHeight = '48px';
+      toast.style.fontSize = '13px';
+      toast.style.padding = '6px 12px';
+    }
+  });
+  </script>
+  @endif
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+</body>
+</html>
