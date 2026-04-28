@@ -1,7 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use Illuminate\Support\Facades\Storage;
+use App\Http\Controllers\PelanggaranController;
 
 Route::redirect('/', '/monitoring-kamera');
 
@@ -17,12 +18,13 @@ Route::get('/monitoring-kamera', function () {
     return view('pages.monitoring-kamera', ['type_menu' => 'kamera']);
 });
 
-// Pelanggaran
-Route::get('/monitoring-pelanggaran', function () {
-    return view('pages.monitoring-pelanggaran', [
-        'type_menu' => 'pelanggaran'
-    ]);
-});
+// save foto pelanggaran
+Route::post('/save-detection', [PelanggaranController::class, 'store']);
 
+// tampilkan halaman monitoring pelanggaran
+Route::get('/monitoring-pelanggaran', [PelanggaranController::class, 'index']);
+
+// hapus data pelanggaran
+Route::delete('/pelanggaran/{id}', [PelanggaranController::class, 'destroy']);
 
 

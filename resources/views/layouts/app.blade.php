@@ -38,6 +38,7 @@
         gtag('config', 'UA-94034622-3');
     </script>
     <!-- END GA -->
+     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 </head>
 

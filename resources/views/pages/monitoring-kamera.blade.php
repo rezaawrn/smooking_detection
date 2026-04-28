@@ -8,7 +8,9 @@
     display:flex;
     justify-content:center;
     align-items:center;
+    margin-top:20px;
 }
+
 .camera-frame{
     width:100%;
     max-width:1000px;
@@ -17,26 +19,15 @@
     border-radius:15px;
     overflow:hidden;
     position:relative;
+    box-shadow:0 4px 20px rgba(0,0,0,0.2);
 }
+
 .camera-frame video{
     width:100%;
     height:100%;
     object-fit:cover;
 }
-.status-badge{
-    position:absolute;
-    top:15px;
-    left:15px;
-    background:#dc3545;
-    color:white;
-    padding:6px 12px;
-    border-radius:20px;
-    font-size:13px;
-    font-weight:bold;
-}
-.status-on{
-    background:#28a745 !important;
-}
+
 .reload-btn{
     position:absolute;
     bottom:15px;
@@ -51,22 +42,28 @@
 <section class="section">
 
 <div class="section-header">
-<h1>Monitoring Kamera</h1>
+    <h1>Monitoring Kamera</h1>
 </div>
+
+<!-- 🔥 CSRF -->
+<meta name="csrf-token" content="{{ csrf_token() }}">
 
 <div class="camera-wrapper">
 
-<div class="camera-frame">
+    <div class="camera-frame">
 
-<span id="camStatus" class="status-badge">OFFLINE</span>
+        <!-- 🎥 VIDEO -->
+        <video id="camera" autoplay playsinline></video>
 
-<video id="camera" autoplay playsinline></video>
+        <!-- hidden canvas -->
+        <canvas id="canvas" style="display:none;"></canvas>
 
-<button onclick="startCamera()" class="btn btn-primary reload-btn">
-Reload Kamera
-</button>
+        <button onclick="startCamera()" class="btn btn-primary reload-btn">
+            Reload Kamera
+        </button>
 
-</div>
+    </div>
+
 </div>
 
 </section>
@@ -79,9 +76,14 @@ Reload Kamera
 <script>
 
 let video = document.getElementById("camera");
-let statusBadge = document.getElementById("camStatus");
-let stream = null;
+let canvas = document.getElementById("canvas");
 
+let stream = null;
+let lastCaptureTime = 0;
+
+// =======================
+// START CAMERA
+// =======================
 async function startCamera(){
     try{
         if(stream){
@@ -89,24 +91,98 @@ async function startCamera(){
         }
 
         stream = await navigator.mediaDevices.getUserMedia({
-            video:true,
+            video: { width: 640, height: 480 },
             audio:false
         });
 
         video.srcObject = stream;
-
-        statusBadge.innerText="ONLINE";
-        statusBadge.classList.add("status-on");
+        await video.play();
 
     }catch(err){
-        statusBadge.innerText="KAMERA DITOLAK";
-        statusBadge.classList.remove("status-on");
-        console.error(err);
+        console.error("Kamera error:", err);
     }
 }
 
-// auto start saat halaman dibuka
-window.onload=startCamera;
+// =======================
+// CAPTURE & DETECT
+// =======================
+function captureAndSend(){
+    if(!stream) return;
+    if(video.videoWidth === 0) return;
+
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob(async function(blob){
+
+        let formData = new FormData();
+        formData.append("image", blob, "frame.jpg");
+
+        try{
+            let response = await fetch("http://127.0.0.1:5000/detect", {
+                method: "POST",
+                body: formData
+            });
+
+            let result = await response.json();
+            console.log("YOLO:", result);
+
+            let now = Date.now();
+
+            let adaRokok = result.detections.some(d => 
+                d.class.toLowerCase() === 'cigarette'
+            );
+
+            if(adaRokok && (now - lastCaptureTime > 5000)){
+
+                lastCaptureTime = now;
+
+                let snapshot = new FormData();
+                snapshot.append("image", blob, "snapshot.jpg");
+
+                let res = await fetch("/save-detection", {
+                    method: "POST",
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: snapshot
+                });
+
+                if(res.ok){
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Terdeteksi!',
+                        text: 'Pelanggaran berhasil disimpan',
+                        timer: 1200,
+                        showConfirmButton: false
+                    });
+                }else{
+                    console.error("❌ Gagal simpan");
+                }
+            }
+
+        }catch(err){
+            console.error("ERROR:", err);
+        }
+
+    }, "image/jpeg");
+}
+
+// =======================
+// LOOP DETEKSI
+// =======================
+setTimeout(() => {
+    setInterval(captureAndSend, 2000);
+}, 2000);
+
+// =======================
+// AUTO START
+// =======================
+document.addEventListener("DOMContentLoaded", startCamera);
 
 </script>
 @endpush

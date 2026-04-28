@@ -67,7 +67,7 @@
 </style>
 @endpush
 
-
+<meta name="csrf-token" content="{{ csrf_token() }}">
 
 @section('main')
 <div class="main-content">
@@ -151,42 +151,59 @@ Daftar Pelanggaran
 
 <tbody id="tableBody">
 
-<tr data-date="2026-02-15">
-<td>15 Feb 2026</td>
-<td>Lab 1</td>
-<td><img src="https://picsum.photos/200" class="table-img"></td>
-<td>
-<button onclick="hapusRow(this)" class="btn btn-danger btn-sm">
-<i class="fas fa-trash"></i> Hapus
-</button>
-</td>
-</tr>
+@forelse($data as $row)
+<tr data-id="{{ $row->id }}" data-date="{{ \Carbon\Carbon::parse($row->detected_at)->format('Y-m-d') }}">
 
-<tr data-date="2026-01-14">
-<td>14 Jan 2026</td>
-<td>Koridor A</td>
-<td><img src="https://picsum.photos/201" class="table-img"></td>
 <td>
-<button onclick="hapusRow(this)" class="btn btn-danger btn-sm">
-<i class="fas fa-trash"></i> Hapus
-</button>
+    {{ \Carbon\Carbon::parse($row->detected_at)->translatedFormat('d M Y H:i') }}
 </td>
-</tr>
 
-<tr data-date="2025-11-10">
-<td>10 Nov 2025</td>
-<td>Parkiran</td>
-<td><img src="https://picsum.photos/202" class="table-img"></td>
+<td>Area Kamera</td>
+
 <td>
-<button onclick="hapusRow(this)" class="btn btn-danger btn-sm">
-<i class="fas fa-trash"></i> Hapus
-</button>
+    <img src="{{ asset('storage/' . $row->image_path) }}" 
+         class="table-img preview-img"
+         onclick="showModal(this.src)">
 </td>
+
+<td>
+    <button onclick="hapusData(this)" class="btn btn-danger btn-sm">
+        <i class="fas fa-trash"></i> Hapus
+    </button>
+</td>
+
 </tr>
+@empty
+<tr>
+<td colspan="4">Tidak ada data</td>
+</tr>
+@endforelse
 
 </tbody>
 
 </table>
+
+<!-- MODAL PREVIEW -->
+<div id="imageModal" style="
+    display:none;
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background:rgba(0,0,0,0.8);
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+">
+
+    <img id="modalImage" style="
+        max-width:90%;
+        max-height:90%;
+        border-radius:15px;
+        box-shadow:0 10px 30px rgba(0,0,0,0.5);
+    ">
+
+</div>
+
 </div>
 
 </div>
@@ -233,5 +250,81 @@ function resetFilter(){
     filterData();
 }
 
+// =======================
+// MODAL PREVIEW
+// =======================
+function showModal(src){
+    document.getElementById("imageModal").style.display = "flex";
+    document.getElementById("modalImage").src = src;
+}
+
+document.getElementById("imageModal").onclick = function(){
+    this.style.display = "none";
+}
+
+
+// =======================
+// HAPUS DATA
+// =======================
+async function hapusData(btn){
+
+    let row = btn.closest("tr");
+    let id = row.dataset.id;
+
+    Swal.fire({
+        title: 'Yakin hapus?',
+        text: "Data tidak bisa dikembalikan!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, hapus!',
+        cancelButtonText: 'Batal'
+    }).then(async (result) => {
+
+        if(result.isConfirmed){
+
+            try{
+                let res = await fetch(`/pelanggaran/${id}`, {
+                    method: "DELETE",
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    }
+                });
+
+                let data = await res.json();
+
+                if(data.success){
+
+                    // animasi hilang
+                    row.style.transition = "0.3s";
+                    row.style.opacity = "0";
+
+                    setTimeout(()=>{
+                        row.remove();
+                    }, 300);
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Terhapus!',
+                        text: 'Data berhasil dihapus.',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+
+                }else{
+                    Swal.fire('Gagal!', data.message || 'Gagal menghapus.', 'error');
+                }
+
+            }catch(err){
+                console.error(err);
+                Swal.fire('Error!', 'Terjadi kesalahan server.', 'error');
+            }
+
+        }
+
+    });
+}
 </script>
 @endpush
