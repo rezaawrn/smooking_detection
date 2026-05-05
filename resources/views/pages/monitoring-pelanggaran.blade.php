@@ -145,6 +145,7 @@ Daftar Pelanggaran
 <th>Tanggal</th>
 <th>Tempat</th>
 <th>Foto</th>
+<th>Keterangan</th>
 <th>Aksi</th>
 </tr>
 </thead>
@@ -164,6 +165,19 @@ Daftar Pelanggaran
     <img src="{{ asset('storage/' . $row->image_path) }}" 
          class="table-img preview-img"
          onclick="showModal(this.src)">
+</td>
+
+<td>
+    <span style="
+        padding:5px 10px;
+        border-radius:8px;
+        background:#ffeaea;
+        color:#d60000;
+        font-weight:600;
+        font-size:13px;
+    ">
+        {{ $row->keterangan ?? '-' }}
+    </span>
 </td>
 
 <td>

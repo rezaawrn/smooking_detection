@@ -33,6 +33,17 @@
     bottom:15px;
     right:15px;
 }
+
+#overlay{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    z-index:2;
+    pointer-events:none;
+}
+
 </style>
 @endpush
 
@@ -54,6 +65,8 @@
 
         <!-- 🎥 VIDEO -->
         <video id="camera" autoplay playsinline></video>
+
+        <canvas id="overlay"></canvas>
 
         <!-- hidden canvas -->
         <canvas id="canvas" style="display:none;"></canvas>
@@ -77,6 +90,8 @@
 
 let video = document.getElementById("camera");
 let canvas = document.getElementById("canvas");
+let overlay = document.getElementById("overlay");
+let ctxOverlay = overlay.getContext("2d");
 
 let stream = null;
 let lastCaptureTime = 0;
@@ -101,6 +116,61 @@ async function startCamera(){
     }catch(err){
         console.error("Kamera error:", err);
     }
+}
+
+// =======================
+// DRAW BOUNDING BOX
+// =======================
+function drawBoxes(detections){
+
+    overlay.width = video.videoWidth;
+    overlay.height = video.videoHeight;
+
+    ctxOverlay.clearRect(0, 0, overlay.width, overlay.height);
+
+    detections.forEach(det => {
+
+        let x = det.x;
+        let y = det.y;
+        let w = det.width;
+        let h = det.height;
+
+        // BOX
+        ctxOverlay.strokeStyle = "red";
+        ctxOverlay.lineWidth = 2;
+        ctxOverlay.strokeRect(x, y, w, h);
+
+        // LABEL + CONF
+        ctxOverlay.fillStyle = "red";
+        ctxOverlay.font = "14px Arial";
+        ctxOverlay.fillText(
+            `${det.class} (${det.confidence})`,
+            x,
+            y > 10 ? y - 5 : 10
+        );
+    });
+}
+
+// =======================
+// CAPTURE FINAL (VIDEO + BOX)
+// =======================
+function captureWithOverlay(){
+
+    let finalCanvas = document.createElement("canvas");
+    let ctx = finalCanvas.getContext("2d");
+
+    finalCanvas.width = video.videoWidth;
+    finalCanvas.height = video.videoHeight;
+
+    // 🔥 video
+    ctx.drawImage(video, 0, 0, finalCanvas.width, finalCanvas.height);
+
+    // 🔥 overlay (box + text)
+    ctx.drawImage(overlay, 0, 0, finalCanvas.width, finalCanvas.height);
+
+    return new Promise(resolve => {
+        finalCanvas.toBlob(blob => resolve(blob), "image/jpeg");
+    });
 }
 
 // =======================
@@ -131,18 +201,28 @@ function captureAndSend(){
             let result = await response.json();
             console.log("YOLO:", result);
 
+            // 🔥 tampilkan bounding box
+            drawBoxes(result.detections);
+
             let now = Date.now();
 
             let adaRokok = result.detections.some(d => 
                 d.class.toLowerCase() === 'cigarette'
             );
 
+            // =======================
+            // SNAPSHOT (ADA BOX)
+            // =======================
             if(adaRokok && (now - lastCaptureTime > 5000)){
 
                 lastCaptureTime = now;
 
+                // 🔥 ambil gambar + overlay
+                let finalBlob = await captureWithOverlay();
+
                 let snapshot = new FormData();
-                snapshot.append("image", blob, "snapshot.jpg");
+                snapshot.append("image", finalBlob, "snapshot.jpg");
+                snapshot.append("keterangan", "Perokok terdeteksi");
 
                 let res = await fetch("/save-detection", {
                     method: "POST",
@@ -154,9 +234,9 @@ function captureAndSend(){
 
                 if(res.ok){
                     Swal.fire({
-                        icon: 'success',
+                        icon: 'warning',
                         title: 'Terdeteksi!',
-                        text: 'Pelanggaran berhasil disimpan',
+                        text: 'Pelanggaran tersimpan',
                         timer: 1200,
                         showConfirmButton: false
                     });

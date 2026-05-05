@@ -11,26 +11,21 @@ class PelanggaranController extends Controller
     public function store(Request $request)
     {
         if(!$request->hasFile('image')){
-            return response()->json(['status' => 'error', 'msg' => 'no file']);
+            return response()->json(['status' => 'error']);
         }
 
         $file = $request->file('image');
-
-        // simpan ke storage
         $path = $file->store('pelanggaran', 'public');
 
-        // simpan ke database
         DB::table('pelanggarans')->insert([
             'image_path' => $path,
+            'keterangan' => $request->keterangan ?? 'Tidak diketahui',
             'detected_at' => now(),
             'created_at' => now(),
             'updated_at' => now()
         ]);
 
-        return response()->json([
-            'status' => 'success',
-            'path' => $path
-        ]);
+        return response()->json(['status' => 'success']);
     }
 
     public function index()
