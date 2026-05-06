@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\PelanggaranController;
+use App\Http\Controllers\AuthController;
 
 Route::redirect('/', '/monitoring-kamera');
 
@@ -27,4 +28,14 @@ Route::get('/monitoring-pelanggaran', [PelanggaranController::class, 'index']);
 // hapus data pelanggaran
 Route::delete('/pelanggaran/{id}', [PelanggaranController::class, 'destroy']);
 
+// tampilkan form login
+Route::get('/auth-login', [AuthController::class, 'showLogin'])->name('login');
 
+// proses login
+Route::post('/auth-login', [AuthController::class, 'login']);
+
+// halaman setelah login
+Route::get('/dashboard', [AuthController::class, 'dashboard'])->middleware('auth');
+
+// logout
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth');

@@ -50,14 +50,14 @@
       <div class="border-b border-gray-600/40 w-60 mx-auto mb-8"></div>
 
       {{-- FORM LOGIN --}}
-      <form action="" method="POST" class="space-y-6">
+      <form action="/auth-login" method="POST" class="space-y-6">
         @csrf
         <!-- Username -->
         <div class="space-y-2">
-          <label class="font-medium text-gray-700">Nama Pengguna</label>
+          <label class="font-medium text-gray-700">Email</label>
           <div class="relative">
-            <input type="text" name="username" placeholder="Masukkan Nama Pengguna"
-              value="{{ old('username') }}"
+            <input type="email" name="email" placeholder="Masukkan Email"
+              value="{{ old('email') }}"
               class="w-full pl-4 pr-4 py-3 border rounded-full text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition" required>
           </div>
         </div>
