@@ -210,12 +210,11 @@ Daftar Pelanggaran
 ">
 
     <img id="modalImage" style="
-        max-width:90%;
-        max-height:90%;
+        max-width:50%;
+        max-height:50%;
         border-radius:15px;
         box-shadow:0 10px 30px rgba(0,0,0,0.5);
     ">
-
 </div>
 
 </div>

@@ -22,11 +22,20 @@
     box-shadow:0 4px 20px rgba(0,0,0,0.2);
 }
 
+.camera-frame img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+/* OLD WEBCAM */
+/*
 .camera-frame video{
     width:100%;
     height:100%;
     object-fit:cover;
 }
+*/
 
 .reload-btn{
     position:absolute;
@@ -63,15 +72,13 @@
 
     <div class="camera-frame">
 
-        <!-- 🎥 VIDEO -->
-        <video id="camera" autoplay playsinline></video>
+        <img 
+            id="camera"
+            src="http://127.0.0.1:5000/video_feed"
+            style="width:100%; height:100%; object-fit:cover;"
+        >
 
-        <canvas id="overlay"></canvas>
-
-        <!-- hidden canvas -->
-        <canvas id="canvas" style="display:none;"></canvas>
-
-        <button onclick="startCamera()" class="btn btn-primary reload-btn">
+        <button onclick="reloadCamera()" class="btn btn-primary reload-btn">
             Reload Kamera
         </button>
 
@@ -83,186 +90,74 @@
 </div>
 @endsection
 
-
-
 @push('scripts')
 <script>
 
-let video = document.getElementById("camera");
-let canvas = document.getElementById("canvas");
-let overlay = document.getElementById("overlay");
-let ctxOverlay = overlay.getContext("2d");
+console.log("Tapo CCTV Connected");
 
-let stream = null;
-let lastCaptureTime = 0;
+// ========================================
+// RELOAD CCTV
+// ========================================
 
-// =======================
-// START CAMERA
-// =======================
-async function startCamera(){
+function reloadCamera(){
+
+    const camera = document.getElementById("camera");
+
+    camera.src =
+        "http://127.0.0.1:5000/video_feed?t=" +
+        new Date().getTime();
+
+    Swal.fire({
+        icon:'success',
+        title:'Reload Kamera',
+        timer:1000,
+        showConfirmButton:false
+    });
+}
+
+let lastId = null;
+
+// =========================
+// CEK DETEKSI BARU
+// =========================
+async function checkNewDetection(){
+
     try{
-        if(stream){
-            stream.getTracks().forEach(track=>track.stop());
+
+        let response = await fetch("/api/latest-detection");
+
+        let data = await response.json();
+
+        // pertama kali load
+        if(lastId === null){
+            lastId = data.id;
+            return;
         }
 
-        stream = await navigator.mediaDevices.getUserMedia({
-            video: { width: 640, height: 480 },
-            audio:false
-        });
+        // jika ada data baru
+        if(data.id > lastId){
 
-        video.srcObject = stream;
-        await video.play();
+            lastId = data.id;
+
+            Swal.fire({
+                icon: 'warning',
+                title: 'Rokok Terdeteksi',
+                text: 'Mengambil Gambar Pelanggaran',
+                timer: 2000,
+                showConfirmButton: false
+            });
+
+        }
 
     }catch(err){
-        console.error("Kamera error:", err);
+
+        console.log(err);
+
     }
 }
 
-// =======================
-// DRAW BOUNDING BOX
-// =======================
-function drawBoxes(detections){
-
-    overlay.width = video.videoWidth;
-    overlay.height = video.videoHeight;
-
-    ctxOverlay.clearRect(0, 0, overlay.width, overlay.height);
-
-    detections.forEach(det => {
-
-        let x = det.x;
-        let y = det.y;
-        let w = det.width;
-        let h = det.height;
-
-        // BOX
-        ctxOverlay.strokeStyle = "red";
-        ctxOverlay.lineWidth = 2;
-        ctxOverlay.strokeRect(x, y, w, h);
-
-        // LABEL + CONF
-        ctxOverlay.fillStyle = "red";
-        ctxOverlay.font = "14px Arial";
-        ctxOverlay.fillText(
-            `${det.class} (${det.confidence})`,
-            x,
-            y > 10 ? y - 5 : 10
-        );
-    });
-}
-
-// =======================
-// CAPTURE FINAL (VIDEO + BOX)
-// =======================
-function captureWithOverlay(){
-
-    let finalCanvas = document.createElement("canvas");
-    let ctx = finalCanvas.getContext("2d");
-
-    finalCanvas.width = video.videoWidth;
-    finalCanvas.height = video.videoHeight;
-
-    // 🔥 video
-    ctx.drawImage(video, 0, 0, finalCanvas.width, finalCanvas.height);
-
-    // 🔥 overlay (box + text)
-    ctx.drawImage(overlay, 0, 0, finalCanvas.width, finalCanvas.height);
-
-    return new Promise(resolve => {
-        finalCanvas.toBlob(blob => resolve(blob), "image/jpeg");
-    });
-}
-
-// =======================
-// CAPTURE & DETECT
-// =======================
-function captureAndSend(){
-    if(!stream) return;
-    if(video.videoWidth === 0) return;
-
-    const ctx = canvas.getContext('2d');
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    canvas.toBlob(async function(blob){
-
-        let formData = new FormData();
-        formData.append("image", blob, "frame.jpg");
-
-        try{
-            let response = await fetch("http://127.0.0.1:5000/detect", {
-                method: "POST",
-                body: formData
-            });
-
-            let result = await response.json();
-            console.log("YOLO:", result);
-
-            // 🔥 tampilkan bounding box
-            drawBoxes(result.detections);
-
-            let now = Date.now();
-
-            let adaRokok = result.detections.some(d => 
-                d.class.toLowerCase() === 'cigarette'
-            );
-
-            // =======================
-            // SNAPSHOT (ADA BOX)
-            // =======================
-            if(adaRokok && (now - lastCaptureTime > 5000)){
-
-                lastCaptureTime = now;
-
-                // 🔥 ambil gambar + overlay
-                let finalBlob = await captureWithOverlay();
-
-                let snapshot = new FormData();
-                snapshot.append("image", finalBlob, "snapshot.jpg");
-                snapshot.append("keterangan", "Perokok terdeteksi");
-
-                let res = await fetch("/save-detection", {
-                    method: "POST",
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: snapshot
-                });
-
-                if(res.ok){
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Terdeteksi!',
-                        text: 'Pelanggaran tersimpan',
-                        timer: 1200,
-                        showConfirmButton: false
-                    });
-                }else{
-                    console.error("❌ Gagal simpan");
-                }
-            }
-
-        }catch(err){
-            console.error("ERROR:", err);
-        }
-
-    }, "image/jpeg");
-}
-
-// =======================
-// LOOP DETEKSI
-// =======================
-setTimeout(() => {
-    setInterval(captureAndSend, 2000);
-}, 2000);
-
-// =======================
-// AUTO START
-// =======================
-document.addEventListener("DOMContentLoaded", startCamera);
+// cek tiap 3 detik
+setInterval(checkNewDetection, 3000);
 
 </script>
 @endpush

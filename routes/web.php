@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\PelanggaranController;
 use App\Http\Controllers\AuthController;
 
@@ -39,3 +40,16 @@ Route::get('/dashboard', [AuthController::class, 'dashboard'])->middleware('auth
 
 // logout
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth');
+
+// API untuk mendapatkan data deteksi terbaru
+Route::get('/api/latest-detection', function(){
+
+    $latest = DB::table('pelanggarans')
+        ->latest('id')
+        ->first();
+
+    return response()->json([
+        'id' => $latest->id ?? 0
+    ]);
+
+});
