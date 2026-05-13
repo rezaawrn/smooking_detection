@@ -103,16 +103,14 @@ function reloadCamera(){
 
     const camera = document.getElementById("camera");
 
-    camera.src =
-        "http://127.0.0.1:5000/video_feed?t=" +
-        new Date().getTime();
+    camera.src = "";
 
-    Swal.fire({
-        icon:'success',
-        title:'Reload Kamera',
-        timer:1000,
-        showConfirmButton:false
-    });
+    setTimeout(() => {
+        camera.src =
+            "http://127.0.0.1:5000/video_feed?t=" +
+            new Date().getTime();
+    }, 500);
+
 }
 
 let lastId = null;
