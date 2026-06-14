@@ -67,7 +67,6 @@
 </style>
 @endpush
 
-<meta name="csrf-token" content="{{ csrf_token() }}">
 
 @section('main')
 <div class="main-content">

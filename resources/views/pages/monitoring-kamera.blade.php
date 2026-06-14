@@ -74,7 +74,7 @@
 
         <img 
             id="camera"
-            src="http://127.0.0.1:5000/video_feed"
+            src="http://172.20.10.4:5000/video_feed"
             style="width:100%; height:100%; object-fit:cover;"
         >
 
@@ -107,7 +107,7 @@ function reloadCamera(){
 
     setTimeout(() => {
         camera.src =
-            "http://127.0.0.1:5000/video_feed?t=" +
+            "http://172.20.10.4:5000/video_feed?t=" +
             new Date().getTime();
     }, 500);
 
