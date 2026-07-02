@@ -142,7 +142,6 @@ Daftar Pelanggaran
 <thead class="thead-dark">
 <tr>
 <th>Tanggal</th>
-<th>Tempat</th>
 <th>Foto</th>
 <th>Keterangan</th>
 <th>Aksi</th>
@@ -158,7 +157,6 @@ Daftar Pelanggaran
     {{ \Carbon\Carbon::parse($row->detected_at)->translatedFormat('d M Y H:i') }}
 </td>
 
-<td>Area Kamera</td>
 
 <td>
     <img src="{{ asset('storage/' . $row->image_path) }}" 
